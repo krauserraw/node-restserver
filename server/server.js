@@ -1,6 +1,8 @@
 require('./config/config');
 
 const express = require('express');
+const mongoose = require('mongoose');
+
 const app = express();
 
 const bodyParser = require('body-parser');
@@ -11,38 +13,37 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.get('/usuario', function(req, res) {
-    res.json('get usuario');
-});
+app.use(require('./routes/usuario'));
 
-app.post('/usuario', function(req, res) {
-    let body = req.body;
 
-    if (body.nombre === undefined) {
-        res.status(400).json({
-            ok: false,
-            mensaje: 'El nombre es necesario'
-        });
-    } else {
-        res.json({
-            persona: body
-        });
-    }
-});
 
-app.put('/usuario/:id', function(req, res) {
+// mongoose.connect('mongodb://localhost:27017/cafe', (err, res) => {
+//     if (err) {
+//         throw err;
+//     }
+//     console.log('Base de datos online!!!');
+// });
 
-    let id = req.params.id;
+// const db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
+// db.once('open', function() {
+//     console.log('Base de datos online!!!');
+// });
 
-    res.json({
-        id
+mongoose.connect(process.env.URLDB, { useUnifiedTopology: true, useNewUrlParser: true, })
+    .then(() => console.log('DB Connected!'))
+    .catch(err => {
+        console.log(err.message);
     });
 
-});
+// mongoose.connect('mongodb://localhost:2701/cafe', { useUnifiedTopology: true, useNewUrlParser: true, }, (err, res) => {
+//     if (err) {
+//         throw err.message;
+//     }
+//     console.log('Base de datos online!!!');
+// });
 
-app.delete('/usuario', function(req, res) {
-    res.json('delete usuario');
-});
+
 
 app.listen(process.env.PORT, () => {
     console.log('Escuchando puerto', process.env.PORT);
