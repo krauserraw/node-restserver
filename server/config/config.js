@@ -23,3 +23,6 @@ if (process.env.NODE_ENV === 'dev') {
 }
 
 process.env.URLDB = urlDB;
+
+// google autenticación
+process.env.CLIENT_ID = process.env.CLIENT_ID || '927273818071-6fvfc9j6d009gk3hbie3n7af7o4n0li0.apps.googleusercontent.com'
