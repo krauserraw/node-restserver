@@ -1,32 +1,38 @@
 const express = require('express');
 const Usuario = require('../models/usuario');
+const { verificaToken, verificaAdmin_Role } = require('../middlewares/autenticacion');
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
 
 const app = express();
 
-app.get('/usuario', function(req, res) {
+app.get('/usuario', verificaToken, (req, res) => {
+
+    // req.usuario => podemos recuperar el usuario ya validado por el token
+    // req.usuario.correo => también podemos extraer las propiedades
+    // req.usuario.nombre
+
     let desde = req.query.desde || 1;
     desde = Number(desde) - 1;
 
     let limite = req.query.limite || 5;
     limite = Number(limite);
 
-    Usuario.find({}, 'nombre correo')
+    Usuario.find({ estado: true }, 'nombre correo')
         .skip(desde)
         .limit(limite)
         .exec((err, usuarios) => {
 
             if (err) { return res.status(400).json({ ok: false, err }); }
 
-            Usuario.countDocuments({}, (err, conteo) => {
+            Usuario.countDocuments({ estado: true }, (err, conteo) => {
                 res.json({ ok: true, usuarios, cuantos: conteo });
             });
 
         });
 });
 
-app.post('/usuario', function(req, res) {
+app.post('/usuario', [verificaToken, verificaAdmin_Role], (req, res) => {
     let body = req.body;
 
     // let usuario = new Usuario({
@@ -48,14 +54,18 @@ app.post('/usuario', function(req, res) {
 
 });
 
-app.put('/usuario/:id', function(req, res) {
+app.put('/usuario/:id', [verificaToken, verificaAdmin_Role], (req, res) => {
 
     let id = req.params.id;
-    let body = _.pick(req.body, ['nombre', 'email', 'img', 'role', 'estado']);
+    // Las propiedades unique no se pueden actualizar
+    // Las propiedades entre [] son las unicas que se pueden modificar
+    let body = _.pick(req.body, ['nombre', 'estado', 'role']);
 
     Usuario.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, usuarioDB) => {
 
-        if (err) { return res.status(400).json({ ok: false, err }); }
+        if (err) { return res.status(400).json({ ok: false, err: { message: 'Error al actualizar' } }); }
+
+        if (!usuarioDB) return res.status(400).json({ ok: false, err: { message: 'Error al actualizar' } });
 
         res.json({ ok: true, usuario: usuarioDB });
 
@@ -63,7 +73,7 @@ app.put('/usuario/:id', function(req, res) {
 
 });
 
-app.delete('/usuario/:id', function(req, res) {
+app.delete('/usuario/:id', [verificaToken, verificaAdmin_Role], (req, res) => {
 
     let id = req.params.id;
 
@@ -84,7 +94,9 @@ app.delete('/usuario/:id', function(req, res) {
 
     Usuario.findByIdAndUpdate(id, cambiarEstado, { new: true }, (err, usuarioBorrado) => {
 
-        if (err) { return res.status(400).json({ ok: false, err }); }
+        if (err) { return res.status(400).json({ ok: false, err: { message: 'Error al eliminar' } }); }
+
+        if (!usuarioBorrado) return res.status(400).json({ ok: false, err: { message: 'Error al eliminar' } });
 
         res.json({ ok: true, usuario: usuarioBorrado });
 
