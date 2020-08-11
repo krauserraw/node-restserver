@@ -79,7 +79,7 @@ app.post('/google', async(req, res) => {
             });
         });
 
-    Usuario.findOne({ correo: googleUser.email }, (err, usuarioDB) => {
+    Usuario.findOne({ correo: googleUser.correo }, (err, usuarioDB) => {
 
         if (err) {
             return res.status(500).json({
@@ -138,7 +138,6 @@ app.post('/google', async(req, res) => {
         }
 
     });
-
 });
 
 module.exports = app
